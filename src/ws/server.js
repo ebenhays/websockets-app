@@ -25,6 +25,10 @@ export function attachWebSocketServer(server) {
   });
 
   wss.on("connection", (ws) => {
+    ws.isAlive = true;
+    ws.on("pong", () => {
+      ws.isAlive = true;
+    });
     sendJson(ws, {
       type: "welcome",
       message: "You are connected to the WebSocket server!",
@@ -50,6 +54,20 @@ export function attachWebSocketServer(server) {
       match,
     });
   }
+  // Heartbeat to detect and close dead connections
+
+  const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (ws.isAlive === false) {
+        return ws.terminate();
+      }
+      ws.isAlive = false;
+      ws.ping(() => {});
+    });
+  }, 30000);
+  wss.on("close", () => {
+    clearInterval(interval);
+  });
 
   return { broadcastMatchCreated };
 }
