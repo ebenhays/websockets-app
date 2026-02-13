@@ -4,8 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "node --watch server.js",
-    "start": "node server.js",
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -19,7 +19,8 @@
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
     "pg": "^8.18.0",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/pg": "^8.16.0",
