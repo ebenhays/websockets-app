@@ -1,4 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
+import { wsArcJet } from "../config/arcjet.js";
 
 function sendJson(socket, data) {
   if (socket.readyState !== WebSocket.OPEN) {
@@ -24,7 +25,28 @@ export function attachWebSocketServer(server) {
     maxPayload: 1024 * 1024, // 1MB max payload
   });
 
-  wss.on("connection", (ws) => {
+  server.on("upgrade", async (req, socket, head) => {
+    if (wsArcJet) {
+      try {
+        const decision = await wsArcJet.protect(req);
+        if (decision.isDenied()) {
+          if (decision.reason.isRateLimit()) {
+            socket.write("HTTP/1.1 429 Too Many Requests\r\n\r\n");
+          } else {
+            socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+          }
+          socket.destroy();
+          return;
+        }
+      } catch (error) {
+        console.error("ArcJet error during WebSocket upgrade:", error);
+        socket.write("HTTP/1.1 503 Service Unavailable\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+    }
+  });
+  wss.on("connection", (ws, req) => {
     ws.isAlive = true;
     ws.on("pong", () => {
       ws.isAlive = true;
